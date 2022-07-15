@@ -87,6 +87,7 @@ export const App: React.FC = React.memo(() => {
   const [rightInput, setRightInput] = useState<string>("");
   const [result, setResult] = useState<DiffResult>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [copied, setCopied] = useState<boolean>(false);
 
   useEffect(() => {
     const leftTitleParam = searchParams.get("leftTitle");
@@ -102,6 +103,7 @@ export const App: React.FC = React.memo(() => {
           rightInput: rightInputParam,
         })
       );
+      setCopied(false);
     } else {
       setResult(undefined);
     }
@@ -118,6 +120,15 @@ export const App: React.FC = React.memo(() => {
       <ActionsContainer>
         {result ? (
           <>
+            <ActionButton
+              disabled={copied}
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                setCopied(true);
+              }}
+            >
+              {copied ? "Copied to clipboard!" : "Copy Link"}
+            </ActionButton>
             <ActionButton
               onClick={() => {
                 setSearchParams({}, { replace: true });

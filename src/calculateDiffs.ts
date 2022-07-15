@@ -1,6 +1,5 @@
 import { jsonLintParser } from "./jsonLintParser";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Data = Record<string, any>;
 
 type Value = Data | string | number | boolean | null;
@@ -27,23 +26,6 @@ interface Config {
   }[];
   currentPath: string[];
   line: number;
-}
-
-function getType(value: Value) {
-  if (
-    function () {
-      // @ts-ignore
-      return value && value !== this;
-    }.call(value)
-  ) {
-    //fallback on 'typeof' for truthy primitive values
-    return typeof value;
-  }
-  // @ts-ignore
-  return {}.toString
-    .call(value)
-    .match(/\s([a-z|A-Z]+)/)[1]
-    .toLowerCase();
 }
 
 const SEPERATOR = "/";
@@ -158,11 +140,7 @@ function unescapeString(val: string) {
 }
 
 function formatVal(val: Value, config: Config) {
-  if (getType(val) === "array") {
-    if (!Array.isArray(val)) {
-      throw new Error("Expected val to be an array");
-    }
-
+  if (Array.isArray(val)) {
     config.out += "[";
 
     config.indent++;
@@ -181,21 +159,15 @@ function formatVal(val: Value, config: Config) {
     config.indent--;
 
     config.out += newLine(config) + getTabs(config.indent) + "],";
-  } else if (getType(val) === "object") {
-    if (typeof val !== "object" || val === null) {
-      throw new Error("Expected val to be an object");
-    }
+  } else if (typeof val === "object" && val !== null) {
     formatAndDecorate(config, val);
-  } else if (getType(val) === "string") {
-    if (typeof val !== "string") {
-      throw new Error("Expected val to be an object");
-    }
+  } else if (typeof val === "string") {
     config.out += '"' + unescapeString(val) + '",';
-  } else if (getType(val) === "number") {
+  } else if (typeof val === "number") {
     config.out += val + ",";
-  } else if (getType(val) === "boolean") {
+  } else if (typeof val === "boolean") {
     config.out += val + ",";
-  } else if (getType(val) === "null") {
+  } else if (val === null) {
     config.out += "null,";
   }
 }
@@ -278,10 +250,7 @@ function finishObject(config: Config) {
 }
 
 function formatAndDecorate(config: Config, data: Data) {
-  if (getType(data) === "array") {
-    if (!Array.isArray(data)) {
-      throw new Error("Expected data to be an Array");
-    }
+  if (Array.isArray(data)) {
     formatAndDecorateArray(config, data);
     return;
   }
@@ -361,7 +330,7 @@ function diffArray(
   val2: Data[],
   config2: Config
 ) {
-  if (getType(val2) !== "array") {
+  if (!Array.isArray(val2)) {
     diffs.push(
       generateDiff(
         config1,
@@ -395,7 +364,7 @@ function diffArray(
       );
     }
   }
-  val1.forEach(function (arrayVal, index) {
+  val1.forEach((_, index) => {
     if (val2.length <= index) {
       diffs.push(
         generateDiff(
@@ -413,7 +382,7 @@ function diffArray(
       config1.currentPath.push(SEPERATOR + "[" + index + "]");
       config2.currentPath.push(SEPERATOR + "[" + index + "]");
 
-      if (getType(val2) === "array") {
+      if (Array.isArray(val2)) {
         /*
          * If both sides are arrays then we want to diff them.
          */
@@ -532,7 +501,7 @@ function diffBool(
   val2: Value,
   config2: Config
 ) {
-  if (getType(val2) !== "boolean") {
+  if (typeof val2 !== "boolean") {
     diffs.push(
       generateDiff(
         config1,
@@ -577,18 +546,18 @@ function diffVal(
   val2: Data | Data[],
   config2: Config
 ) {
-  if (getType(val1) === "array") {
-    if (!Array.isArray(val1)) {
-      throw new Error("Expected val1 to be an Array");
-    }
+  if (Array.isArray(val1)) {
     if (!Array.isArray(val2)) {
       throw new Error("Expected val2 to be an Array");
     }
     diffArray(diffs, val1, config1, val2, config2);
-  } else if (getType(val1) === "object") {
+  } else if (typeof val1 === "object" && val1 !== null) {
     if (
-      ["array", "string", "number", "boolean", "null"].indexOf(getType(val2)) >
-      -1
+      Array.isArray(val2) ||
+      typeof val2 === "string" ||
+      typeof val2 === "number" ||
+      typeof val2 === "boolean" ||
+      val2 === null
     ) {
       diffs.push(
         generateDiff(
@@ -603,8 +572,8 @@ function diffVal(
     } else {
       findDiffs(diffs, config1, val1, config2, val2);
     }
-  } else if (getType(val1) === "string") {
-    if (getType(val2) !== "string") {
+  } else if (typeof val1 === "string") {
+    if (typeof val2 !== "string") {
       diffs.push(
         generateDiff(
           config1,
@@ -627,8 +596,8 @@ function diffVal(
         )
       );
     }
-  } else if (getType(val1) === "number") {
-    if (getType(val2) !== "number") {
+  } else if (typeof val1 === "number") {
+    if (typeof val2 !== "number") {
       diffs.push(
         generateDiff(
           config1,
@@ -651,9 +620,9 @@ function diffVal(
         )
       );
     }
-  } else if (getType(val1) === "boolean") {
+  } else if (typeof val1 === "boolean") {
     diffBool(diffs, val1, config1, val2, config2);
-  } else if (getType(val1) === "null" && getType(val2) !== "null") {
+  } else if (val1 === null && val2 !== null) {
     diffs.push(
       generateDiff(
         config1,

@@ -638,7 +638,9 @@ function diffVal(
 
 export type DiffSuccessfulResult = {
   valid: true;
+  leftTitle: string;
   leftOutput: string;
+  rightTitle: string;
   rightOutput: string;
   diffs: Diff[];
 };
@@ -651,10 +653,14 @@ export type DiffFailedResult = {
 export type DiffResult = DiffSuccessfulResult | DiffFailedResult;
 
 export function calculateDiffs({
+  leftTitle,
   leftInput,
+  rightTitle,
   rightInput,
 }: {
+  leftTitle: string;
   leftInput: string;
+  rightTitle: string;
   rightInput: string;
 }): DiffResult {
   const diffs: Diff[] = [];
@@ -686,7 +692,9 @@ export function calculateDiffs({
 
   return {
     valid: true,
+    leftTitle,
     leftOutput: leftConfig.out,
+    rightTitle,
     rightOutput: rightConfig.out,
     diffs: diffs.slice().sort((a, b) => a.path1.line - b.path1.line),
   };

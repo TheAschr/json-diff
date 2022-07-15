@@ -3,29 +3,32 @@ export const theme = {
     borderRadius: 6,
     pallete: {
       border: {
-        default: '#30363d'
+        default: "#30363d",
+        input: "#040404",
+        inputHovered: "#343434",
+        jsonOutput: "#040404",
       },
       background: {
-        dark: '#0E1117',
-        main: '#0d1117'
+        input: "#242424",
+        main: "#151515",
       },
       font: {
-        default: '#c9d1d9',
-        subtle: '#6e7681',
-        light: '#8b949e'
+        default: "#dddddd",
+        subtle: "#6e7681",
+        light: "#8b949e",
       },
       grey: {
-        transparent: '#5150504d',
-        solid: '#ffffff26',
+        transparent: "#5150504d",
+        solid: "#ffffff26",
       },
       error: {
-        transparent: '#f8514926',
-        solid: '#f851494d'
+        transparent: "#f8514926",
+        solid: "#f851494d",
       },
       success: {
-        transparent: '#2ea04326',
-        solid: '#3fb9504d'
-      }
-    }
-  }
+        transparent: "#2ea04326",
+        solid: "#3fb9504d",
+      },
+    },
+  },
 };

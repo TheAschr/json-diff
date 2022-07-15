@@ -8,6 +8,10 @@ import { JsonOutput } from "./JsonOutput";
 import { Logo } from "./Logo";
 import { theme } from "./theme";
 import { Link } from "react-router-dom";
+import { deviceSizeBreakpoints } from "./deviceSizeBreakpoints";
+import { TitleInput } from "./TitleInput";
+import { sampleData } from "./sampleData";
+import { Button } from "./Button";
 
 const Root = styled("div")(() => ({
   display: "flex",
@@ -17,50 +21,19 @@ const Root = styled("div")(() => ({
   flexGrow: 1,
 }));
 
-const LEFT_DEFAULT_VALUE = JSON.stringify({
-  "Aidan Gillen": {
-    array: ['Game of Thron"es', "The Wire"],
-    string: "some string",
-    int: 2,
-    aboolean: true,
-    boolean: true,
-    object: {
-      foo: "bar",
-      object1: { "new prop1": "new prop value" },
-      object2: { "new prop1": "new prop value" },
-      object3: { "new prop1": "new prop value" },
-      object4: { "new prop1": "new prop value" },
-    },
-  },
-  "Amy Ryan": { one: "In Treatment", two: "The Wire" },
-  "Annie Fitzgerald": ["Big Love", "True Blood"],
-  "Anwan Glover": ["Treme", "The Wire"],
-  "Alexander Skarsgard": ["Generation Kill", "True Blood"],
-  "Clarke Peters": null,
-});
-
-const RIGHT_DEFAULT_VALUE = JSON.stringify({
-  "Aidan Gillen": {
-    array: ["Game of Thrones", "The Wire"],
-    string: "some string",
-    int: "2",
-    otherint: 4,
-    aboolean: "true",
-    boolean: false,
-    object: { foo: "bar" },
-  },
-  "Amy Ryan": ["In Treatment", "The Wire"],
-  "Annie Fitzgerald": ["True Blood", "Big Love", "The Sopranos", "Oz"],
-  "Anwan Glover": ["Treme", "The Wire"],
-  "Alexander Skarsg?rd": ["Generation Kill", "True Blood"],
-  "Alice Farmer": ["The Corner", "Oz", "The Wire"],
-});
-
 const ContentContainer = styled("div")(() => ({
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gridGap: "0.2rem",
-  padding: "1rem",
+  [`@media ${deviceSizeBreakpoints.zero}`]: {
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    gridGap: "1rem",
+    padding: "1rem",
+  },
+  [`@media ${deviceSizeBreakpoints.laptop}`]: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gridGap: "0.2rem",
+    padding: "1rem",
+  },
 }));
 
 const ActionsContainer = styled("div")(() => ({
@@ -92,18 +65,42 @@ const Title = styled("h1")(() => ({
   paddingBottom: "0.75rem",
 }));
 
+const InputContainer = styled("div")(() => ({
+  display: "flex",
+  flexDirection: "column" as const,
+}));
+
+const StyledTitleInput = styled(TitleInput)(() => ({
+  marginBottom: "0.75rem",
+}));
+
+const ActionButton = styled(Button)(() => ({
+  "&:not(:last-child)": {
+    marginRight: "0.5rem",
+  },
+}));
+
 export const App: React.FC = React.memo(() => {
+  const [leftTitle, setLeftTitle] = useState<string>("");
+  const [rightTitle, setRightTitle] = useState<string>("");
   const [leftInput, setLeftInput] = useState<string>("");
   const [rightInput, setRightInput] = useState<string>("");
   const [result, setResult] = useState<DiffResult>();
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    const leftParam = searchParams.get("left");
-    const rightParam = searchParams.get("right");
-    if (leftParam && rightParam) {
+    const leftTitleParam = searchParams.get("leftTitle");
+    const leftInputParam = searchParams.get("leftInput");
+    const rightTitleParam = searchParams.get("rightTitle");
+    const rightInputParam = searchParams.get("rightInput");
+    if (leftInputParam && rightInputParam) {
       setResult(
-        calculateDiffs({ leftInput: leftParam, rightInput: rightParam })
+        calculateDiffs({
+          leftTitle: leftTitleParam || "",
+          leftInput: leftInputParam,
+          rightTitle: rightTitleParam || "",
+          rightInput: rightInputParam,
+        })
       );
     } else {
       setResult(undefined);
@@ -119,65 +116,100 @@ export const App: React.FC = React.memo(() => {
         </TitleLink>
       </Header>
       <ActionsContainer>
-        {result && (
-          <button
-            onClick={() => {
-              setSearchParams({}, { replace: true });
-            }}
-          >
-            Perform a new diff
-          </button>
+        {result ? (
+          <>
+            <ActionButton
+              onClick={() => {
+                setSearchParams({}, { replace: true });
+              }}
+            >
+              Perform a new diff
+            </ActionButton>
+          </>
+        ) : (
+          <>
+            <ActionButton
+              onClick={() => {
+                setLeftTitle(sampleData.leftTitle);
+                setLeftInput(sampleData.leftInput);
+                setRightTitle(sampleData.rightTitle);
+                setRightInput(sampleData.rightInput);
+              }}
+            >
+              Sample Data
+            </ActionButton>
+            <ActionButton
+              onClick={() => {
+                setSearchParams(
+                  {
+                    leftTitle,
+                    leftInput,
+                    rightTitle,
+                    rightInput,
+                  },
+                  { replace: true }
+                );
+              }}
+            >
+              Compare
+            </ActionButton>
+          </>
         )}
-        {!result && (
-          <button
-            onClick={() => {
-              setLeftInput(LEFT_DEFAULT_VALUE);
-              setRightInput(RIGHT_DEFAULT_VALUE);
-            }}
-          >
-            Sample Data
-          </button>
-        )}
-        <button
-          onClick={() => {
-            setSearchParams(
-              {
-                left: leftInput,
-                right: rightInput,
-              },
-              { replace: true }
-            );
-          }}
-        >
-          Compare
-        </button>
       </ActionsContainer>
       <ContentContainer>
         {result?.valid === true ? (
           <>
-            <JsonOutput side="left" diffs={result.diffs}>
+            <JsonOutput
+              side="left"
+              title={result.leftTitle}
+              diffs={result.diffs}
+            >
               {result.leftOutput}
             </JsonOutput>
-            <JsonOutput side="right" diffs={result.diffs}>
+            <JsonOutput
+              side="right"
+              title={result.rightTitle}
+              diffs={result.diffs}
+            >
               {result.rightOutput}
             </JsonOutput>
           </>
         ) : (
           <>
-            <JsonInput
-              aria-label="Left Input"
-              value={leftInput}
-              onChange={({ target: { value: input } }) => {
-                setLeftInput(input);
-              }}
-            />
-            <JsonInput
-              aria-label="Right Input"
-              value={rightInput}
-              onChange={({ target: { value: input } }) => {
-                setRightInput(input);
-              }}
-            />
+            <InputContainer>
+              <StyledTitleInput
+                placeholder="Title"
+                aria-label="Left Input"
+                value={leftTitle}
+                onChange={({ target: { value: input } }) => {
+                  setLeftTitle(input);
+                }}
+              />
+              <JsonInput
+                aria-label="Left Input"
+                value={leftInput}
+                onChange={({ target: { value: input } }) => {
+                  setLeftInput(input);
+                }}
+              />
+            </InputContainer>
+            <InputContainer>
+              <StyledTitleInput
+                placeholder="Title"
+                aria-label="Right Input"
+                value={rightTitle}
+                onChange={({ target: { value: input } }) => {
+                  setRightTitle(input);
+                }}
+              />
+              <JsonInput
+                aria-label="Right Input"
+                value={rightInput}
+                onChange={({ target: { value: input } }) => {
+                  setRightInput(input);
+                }}
+              />
+            </InputContainer>
           </>
         )}
       </ContentContainer>
